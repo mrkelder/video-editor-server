@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { TokenCombination } from './sign-up.types';
+import type { TokenCombination } from './auth.types';
 
 @Injectable()
-export class SignUpService {
+export class AuthService {
   getTokenCombination(): TokenCombination {
     return { accessToken: '', refreshToken: '' };
   }
