@@ -10,18 +10,19 @@ export class AuthController {
 
   @Post()
   @HttpCode(200)
-  createUser(
+  async createUser(
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
-  ): CreateUserResponse {
+  ): Promise<CreateUserResponse> {
     const { accessToken, refreshToken } =
-      this.signUpService.getTokenCombination();
+      await this.signUpService.getTokenCombination();
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: false, // TODO: add IS_PRODUCTION env variable
       sameSite: true,
     });
+
     return { accessToken };
   }
 }
