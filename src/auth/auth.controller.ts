@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private signUpService: AuthService) {}
 
-  @Post()
+  @Post('sign-up')
   @HttpCode(200)
   async createUser(
     @Body() createUserDto: CreateUserDto,
