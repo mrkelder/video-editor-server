@@ -7,7 +7,7 @@ import {
   Post,
   Res,
 } from '@nestjs/common';
-import { CreateUserDto } from './auth.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import type { CreateUserResponse } from './auth.types';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
