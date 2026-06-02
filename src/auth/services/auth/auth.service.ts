@@ -15,6 +15,12 @@ export class AuthService {
     return !!userObject;
   }
 
+  async addUser({ userName, password }: CreateUserDto): Promise<void> {
+    const databaseUpdate = Promise.resolve({ userName, password });
+
+    await databaseUpdate;
+  }
+
   async getTokenCombination(): Promise<TokenCombination> {
     const accessToken = await this.jwtService.signAsync(
       { a: 1, b: 2 },

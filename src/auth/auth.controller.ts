@@ -29,6 +29,8 @@ export class AuthController {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
 
+    await this.authService.addUser(createUserDto);
+
     const { accessToken, refreshToken } =
       await this.authService.getTokenCombination();
 
