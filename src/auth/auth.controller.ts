@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { CreateUserDto } from './auth.dto';
 import type { CreateUserResponse } from './auth.types';
 import type { Response } from 'express';
@@ -14,6 +22,13 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
+    const { userName } = createUserDto;
+    const doesUserExist = await this.signUpService.doesUserExist(userName);
+
+    if (doesUserExist) {
+      throw new HttpException('User already exists', HttpStatus.CONFLICT);
+    }
+
     const { accessToken, refreshToken } =
       await this.signUpService.getTokenCombination();
 
