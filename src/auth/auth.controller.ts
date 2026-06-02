@@ -14,7 +14,7 @@ import { AuthService } from './services/auth/auth.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private signUpService: AuthService) {}
+  constructor(private authService: AuthService) {}
 
   @Post('sign-up')
   @HttpCode(200)
@@ -23,14 +23,14 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
     const { userName } = createUserDto;
-    const doesUserExist = await this.signUpService.doesUserExist(userName);
+    const doesUserExist = await this.authService.doesUserExist(userName);
 
     if (doesUserExist) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
 
     const { accessToken, refreshToken } =
-      await this.signUpService.getTokenCombination();
+      await this.authService.getTokenCombination();
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
