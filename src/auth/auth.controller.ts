@@ -5,10 +5,11 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  Req,
   Res,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from './services/auth/auth.service';
 import {
   CreateUserResponse,
@@ -72,6 +73,39 @@ export class AuthController {
       throw new HttpException(
         'Credentials are invalid',
         HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('refresh-token')
+  async refreshToken(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<RefreshTokenResponse> {
+    try {
+      const refreshToken = request.cookies?.refreshToken as string | undefined;
+
+      if (!refreshToken) throw new Error('Refresh token is missing');
+
+      const { userId } =
+        await this.authService.verifyRefreshToken(refreshToken);
+
+      const user = await this.authService.getUserByUserId(userId);
+
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+        await this.authService.getTokenCombination(user.id);
+
+      response.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        secure: false, // TODO: add IS_PRODUCTION env variable
+        sameSite: true,
+      });
+
+      return { accessToken: newAccessToken };
+    } catch {
+      throw new HttpException(
+        'Failed to refresh token',
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }
