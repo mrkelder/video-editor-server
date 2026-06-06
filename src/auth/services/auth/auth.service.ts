@@ -37,8 +37,8 @@ export class AuthService {
     return !!(await this.getUserByUserName(userName));
   }
 
-  async getUserByUserName(userName: string): Promise<{ userName: 'admin' }> {
-    const user = await Promise.resolve({ userName: 'admin' as const });
+  async getUserByUserName(userName: string): Promise<User> {
+    const user = await Promise.resolve(MOCK_USER);
 
     if (userName === MOCK_USER_CREDENTIALS.userName) return user;
     else throw new Error('User does not exist');
