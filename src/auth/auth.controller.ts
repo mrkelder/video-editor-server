@@ -5,12 +5,16 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  Req,
   Res,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from './services/auth/auth.service';
-import { CreateUserResponse } from './auth.controller.types';
+import {
+  CreateUserResponse,
+  RefreshTokenResponse,
+} from './auth.controller.types';
 import { LogInUserDto } from './dto/log-in-user.dto';
 
 @Controller('auth')
@@ -23,17 +27,17 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
-    const { userName, password } = createUserDto;
+    const { userName } = createUserDto;
     const doesUserExist = await this.authService.doesUserExist(userName);
 
     if (doesUserExist) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
 
-    await this.authService.addUser(createUserDto);
+    const { id } = await this.authService.addUser(createUserDto);
 
     const { accessToken, refreshToken } =
-      await this.authService.getTokenCombination(userName, password);
+      await this.authService.getTokenCombination(id);
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -56,7 +60,7 @@ export class AuthController {
       const user = await this.authService.getUserByUserName(userName);
 
       const { accessToken, refreshToken } =
-        await this.authService.getTokenCombination(userName, password);
+        await this.authService.getTokenCombination(user.id);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
@@ -69,6 +73,39 @@ export class AuthController {
       throw new HttpException(
         'Credentials are invalid',
         HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('refresh-token')
+  async refreshToken(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<RefreshTokenResponse> {
+    try {
+      const refreshToken = request.cookies?.refreshToken as string | undefined;
+
+      if (!refreshToken) throw new Error('Refresh token is missing');
+
+      const { userId } =
+        await this.authService.verifyRefreshToken(refreshToken);
+
+      const user = await this.authService.getUserByUserId(userId);
+
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+        await this.authService.getTokenCombination(user.id);
+
+      response.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        secure: false, // TODO: add IS_PRODUCTION env variable
+        sameSite: true,
+      });
+
+      return { accessToken: newAccessToken };
+    } catch {
+      throw new HttpException(
+        'Failed to refresh token',
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }
