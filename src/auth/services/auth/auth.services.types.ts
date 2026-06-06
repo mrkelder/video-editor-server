@@ -12,3 +12,8 @@ export interface Temporary_User {
   id: string;
   userName: string;
 }
+
+// TODO: move to JWT service
+export interface Tepmorary_JwtTokenPayload {
+  userId: Temporary_User['id'];
+}

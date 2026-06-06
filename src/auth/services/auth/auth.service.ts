@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type {
   JwtTokenCombination,
   Temporary_User as User,
+  Tepmorary_JwtTokenPayload as JwtTokenPayload,
 } from './auth.services.types';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../../dto/create-user.dto';
@@ -56,13 +57,13 @@ export class AuthService {
   }
 
   async getTokenCombination(userId: User['id']): Promise<JwtTokenCombination> {
-    const jwtTokenInput = { userId };
+    const jwtTokenPayload: JwtTokenPayload = { userId };
     const accessToken = await this.jwtService.signAsync(
-      jwtTokenInput,
+      jwtTokenPayload,
       { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
     );
     const refreshToken = await this.jwtService.signAsync(
-      jwtTokenInput,
+      jwtTokenPayload,
       { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
     );
 
