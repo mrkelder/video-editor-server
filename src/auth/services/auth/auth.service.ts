@@ -12,7 +12,7 @@ export class AuthService {
   async verifyUserCredentials(
     userName: string,
     password: string,
-  ): Promise<Error | void> {
+  ): Promise<void> {
     const doesUserExist = await this.doesUserExist(userName);
     const areCredentialsValid =
       userName === MOCK_USER.userName && password === MOCK_USER.password;
@@ -25,11 +25,14 @@ export class AuthService {
   }
 
   async doesUserExist(userName: string): Promise<boolean> {
-    const userObject = await Promise.resolve(
-      userName === 'admin' ? {} : undefined,
-    );
+    return !!(await this.getUserByUserName(userName));
+  }
 
-    return !!userObject;
+  async getUserByUserName(userName: string): Promise<{ userName: 'admin' }> {
+    const user = await Promise.resolve({ userName: 'admin' as const });
+
+    if (userName === MOCK_USER.userName) return user;
+    else throw new Error('User does not exist');
   }
 
   async addUser({ userName, password }: CreateUserDto): Promise<void> {
