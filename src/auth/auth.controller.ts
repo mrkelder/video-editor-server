@@ -33,10 +33,10 @@ export class AuthController {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
 
-    await this.authService.addUser(createUserDto);
+    const { id } = await this.authService.addUser(createUserDto);
 
     const { accessToken, refreshToken } =
-      await this.authService.getTokenCombination(userName);
+      await this.authService.getTokenCombination(id);
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -59,7 +59,7 @@ export class AuthController {
       const user = await this.authService.getUserByUserName(userName);
 
       const { accessToken, refreshToken } =
-        await this.authService.getTokenCombination(userName);
+        await this.authService.getTokenCombination(user.id);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,

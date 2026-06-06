@@ -55,14 +55,14 @@ export class AuthService {
     return MOCK_USER;
   }
 
-  async getTokenCombination(userName: string): Promise<JwtTokenCombination> {
-    const jwtTokenCredentials = { userName };
+  async getTokenCombination(userId: User['id']): Promise<JwtTokenCombination> {
+    const jwtTokenInput = { userId };
     const accessToken = await this.jwtService.signAsync(
-      jwtTokenCredentials,
+      jwtTokenInput,
       { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
     );
     const refreshToken = await this.jwtService.signAsync(
-      jwtTokenCredentials,
+      jwtTokenInput,
       { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
     );
 
