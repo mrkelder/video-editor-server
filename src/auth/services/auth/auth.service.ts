@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import type { JwtTokenCombination } from './auth.services.types';
+import type {
+  JwtTokenCombination,
+  Temporary_User as User,
+} from './auth.services.types';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../../dto/create-user.dto';
 
-const MOCK_USER = { userName: 'admin', password: 'admin' };
+const MOCK_USER_CREDENTIALS = { userName: 'admin', password: 'admin' };
 const MOCK_JWT_SECRET = '0001';
+const MOCK_USER: User = {
+  id: String(Math.floor(Math.random() * 100000)),
+  userName: MOCK_USER_CREDENTIALS.userName,
+};
 
 @Injectable()
 export class AuthService {
@@ -16,7 +23,8 @@ export class AuthService {
   ): Promise<void> {
     const doesUserExist = await this.doesUserExist(userName);
     const areCredentialsValid =
-      userName === MOCK_USER.userName && password === MOCK_USER.password;
+      userName === MOCK_USER_CREDENTIALS.userName &&
+      password === MOCK_USER_CREDENTIALS.password;
 
     if (!doesUserExist || !areCredentialsValid) {
       throw new Error('Credentials are not valid');
@@ -32,7 +40,7 @@ export class AuthService {
   async getUserByUserName(userName: string): Promise<{ userName: 'admin' }> {
     const user = await Promise.resolve({ userName: 'admin' as const });
 
-    if (userName === MOCK_USER.userName) return user;
+    if (userName === MOCK_USER_CREDENTIALS.userName) return user;
     else throw new Error('User does not exist');
   }
 
