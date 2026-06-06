@@ -10,7 +10,10 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import type { Response } from 'express';
 import { AuthService } from './services/auth/auth.service';
-import { CreateUserResponse } from './auth.controller.types';
+import {
+  CreateUserResponse,
+  RefreshTokenResponse,
+} from './auth.controller.types';
 import { LogInUserDto } from './dto/log-in-user.dto';
 
 @Controller('auth')
@@ -23,7 +26,7 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
-    const { userName, password } = createUserDto;
+    const { userName } = createUserDto;
     const doesUserExist = await this.authService.doesUserExist(userName);
 
     if (doesUserExist) {
@@ -33,7 +36,7 @@ export class AuthController {
     await this.authService.addUser(createUserDto);
 
     const { accessToken, refreshToken } =
-      await this.authService.getTokenCombination(userName, password);
+      await this.authService.getTokenCombination(userName);
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -56,7 +59,7 @@ export class AuthController {
       const user = await this.authService.getUserByUserName(userName);
 
       const { accessToken, refreshToken } =
-        await this.authService.getTokenCombination(userName, password);
+        await this.authService.getTokenCombination(userName);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,

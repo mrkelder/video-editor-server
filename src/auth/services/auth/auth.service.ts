@@ -41,11 +41,8 @@ export class AuthService {
     await databaseUpdate;
   }
 
-  async getTokenCombination(
-    userName: string,
-    password: string,
-  ): Promise<JwtTokenCombination> {
-    const jwtTokenCredentials = { userName, password };
+  async getTokenCombination(userName: string): Promise<JwtTokenCombination> {
+    const jwtTokenCredentials = { userName };
     const accessToken = await this.jwtService.signAsync(
       jwtTokenCredentials,
       { secret: '123' }, // TODO: replace with env secret
