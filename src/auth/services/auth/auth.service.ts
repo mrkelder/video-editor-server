@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../../dto/create-user.dto';
 
 const MOCK_USER = { userName: 'admin', password: 'admin' };
+const MOCK_JWT_SECRET = '0001';
 
 @Injectable()
 export class AuthService {
@@ -45,11 +46,11 @@ export class AuthService {
     const jwtTokenCredentials = { userName };
     const accessToken = await this.jwtService.signAsync(
       jwtTokenCredentials,
-      { secret: '123' }, // TODO: replace with env secret
+      { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
     );
     const refreshToken = await this.jwtService.signAsync(
       jwtTokenCredentials,
-      { secret: '123' }, // TODO: replace with env secret
+      { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
     );
 
     return { accessToken, refreshToken };
