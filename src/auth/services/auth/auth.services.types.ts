@@ -1,4 +1,4 @@
-export interface TokenCombination {
+export interface JwtTokenCombination {
   accessToken: string;
   refreshToken: string;
 }

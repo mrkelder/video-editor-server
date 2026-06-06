@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { TokenCombination } from './auth.services.types';
+import type { JwtTokenCombination } from './auth.services.types';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../../dto/create-user.dto';
 
@@ -44,7 +44,7 @@ export class AuthService {
   async getTokenCombination(
     userName: string,
     password: string,
-  ): Promise<TokenCombination> {
+  ): Promise<JwtTokenCombination> {
     const jwtTokenCredentials = { userName, password };
     const accessToken = await this.jwtService.signAsync(
       jwtTokenCredentials,
