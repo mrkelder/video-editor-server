@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { TokenCombination } from '../../auth.types';
+import type { TokenCombination } from './auth.services.types';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../../dto/create-user.dto';
 

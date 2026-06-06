@@ -8,9 +8,9 @@ import {
   Res,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import type { CreateUserResponse } from './auth.types';
 import type { Response } from 'express';
 import { AuthService } from './services/auth/auth.service';
+import { CreateUserResponse } from './auth.controller.types';
 
 @Controller('auth')
 export class AuthController {
