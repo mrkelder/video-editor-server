@@ -44,10 +44,15 @@ export class AuthService {
     else throw new Error('User does not exist');
   }
 
-  async addUser({ userName, password }: CreateUserDto): Promise<void> {
-    const databaseUpdate = Promise.resolve({ userName, password });
+  async addUser({ userName, password }: CreateUserDto): Promise<User> {
+    const databaseUpdate = Promise.resolve({
+      userName,
+      password,
+    });
 
     await databaseUpdate;
+
+    return MOCK_USER;
   }
 
   async getTokenCombination(userName: string): Promise<JwtTokenCombination> {
