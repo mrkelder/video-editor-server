@@ -45,6 +45,13 @@ export class AuthService {
     else throw new Error('User does not exist');
   }
 
+  async getUserByUserId(userId: User['id']): Promise<User> {
+    const user = await Promise.resolve(MOCK_USER);
+
+    if (userId === MOCK_USER.id) return user;
+    else throw new Error('User does not exist');
+  }
+
   async addUser({ userName, password }: CreateUserDto): Promise<User> {
     const databaseUpdate = Promise.resolve({
       userName,
