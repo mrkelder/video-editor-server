@@ -35,7 +35,12 @@ export class AuthService {
   }
 
   async doesUserExist(userName: string): Promise<boolean> {
-    return !!(await this.getUserByUserName(userName));
+    try {
+      await this.getUserByUserName(userName);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async getUserByUserName(userName: string): Promise<User> {
