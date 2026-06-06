@@ -23,7 +23,7 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
-    const { userName } = createUserDto;
+    const { userName, password } = createUserDto;
     const doesUserExist = await this.authService.doesUserExist(userName);
 
     if (doesUserExist) {
@@ -33,7 +33,7 @@ export class AuthController {
     await this.authService.addUser(createUserDto);
 
     const { accessToken, refreshToken } =
-      await this.authService.getTokenCombination();
+      await this.authService.getTokenCombination(userName, password);
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -51,16 +51,12 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     try {
-      await this.authService.verifyUserCredentials(
-        logInUserDto.userName,
-        logInUserDto.password,
-      );
-      const user = await this.authService.getUserByUserName(
-        logInUserDto.userName,
-      );
+      const { userName, password } = logInUserDto;
+      await this.authService.verifyUserCredentials(userName, password);
+      const user = await this.authService.getUserByUserName(userName);
 
       const { accessToken, refreshToken } =
-        await this.authService.getTokenCombination();
+        await this.authService.getTokenCombination(userName, password);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,

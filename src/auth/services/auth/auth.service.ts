@@ -41,15 +41,20 @@ export class AuthService {
     await databaseUpdate;
   }
 
-  async getTokenCombination(): Promise<TokenCombination> {
+  async getTokenCombination(
+    userName: string,
+    password: string,
+  ): Promise<TokenCombination> {
+    const jwtTokenCredentials = { userName, password };
     const accessToken = await this.jwtService.signAsync(
-      { a: 1, b: 2 },
+      jwtTokenCredentials,
       { secret: '123' }, // TODO: replace with env secret
     );
     const refreshToken = await this.jwtService.signAsync(
-      { a: 1, b: 2 },
+      jwtTokenCredentials,
       { secret: '123' }, // TODO: replace with env secret
     );
+
     return { accessToken, refreshToken };
   }
 }
