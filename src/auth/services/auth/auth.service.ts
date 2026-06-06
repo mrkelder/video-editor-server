@@ -35,10 +35,12 @@ export class AuthService {
   }
 
   async doesUserExist(userName: string): Promise<boolean> {
-    return await Promise.resolve(userName !== MOCK_USER_CREDENTIALS.userName);
-
-    // TODO: re-implement when database is live
-    // return !!(await this.getUserByUserName(userName));
+    try {
+      await this.getUserByUserName(userName);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async getUserByUserName(userName: string): Promise<User> {
