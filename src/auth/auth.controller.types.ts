@@ -2,7 +2,7 @@ export interface CreateUserResponse {
   accessToken: string;
 }
 
-export interface TokenCombination {
+export interface LogInUserResponse {
+  userName: string;
   accessToken: string;
-  refreshToken: string;
 }

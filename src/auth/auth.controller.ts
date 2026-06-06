@@ -8,9 +8,10 @@ import {
   Res,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import type { CreateUserResponse } from './auth.types';
 import type { Response } from 'express';
 import { AuthService } from './services/auth/auth.service';
+import { CreateUserResponse } from './auth.controller.types';
+import { LogInUserDto } from './dto/log-in-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -22,7 +23,7 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
-    const { userName } = createUserDto;
+    const { userName, password } = createUserDto;
     const doesUserExist = await this.authService.doesUserExist(userName);
 
     if (doesUserExist) {
@@ -32,7 +33,7 @@ export class AuthController {
     await this.authService.addUser(createUserDto);
 
     const { accessToken, refreshToken } =
-      await this.authService.getTokenCombination();
+      await this.authService.getTokenCombination(userName, password);
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -41,5 +42,34 @@ export class AuthController {
     });
 
     return { accessToken };
+  }
+
+  @Post('log-in')
+  @HttpCode(200)
+  async logInUser(
+    @Body() logInUserDto: LogInUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    try {
+      const { userName, password } = logInUserDto;
+      await this.authService.verifyUserCredentials(userName, password);
+      const user = await this.authService.getUserByUserName(userName);
+
+      const { accessToken, refreshToken } =
+        await this.authService.getTokenCombination(userName, password);
+
+      response.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: false, // TODO: add IS_PRODUCTION env variable
+        sameSite: true,
+      });
+
+      return { accessToken, userName: user.userName };
+    } catch {
+      throw new HttpException(
+        'Credentials are invalid',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }
