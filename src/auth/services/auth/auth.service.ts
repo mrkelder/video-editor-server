@@ -70,13 +70,14 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async verifyRefreshToken(refreshToken: string): Promise<void> {
+  async verifyRefreshToken(refreshToken: string): Promise<JwtTokenPayload> {
     try {
-      await this.jwtService.verifyAsync(refreshToken, {
-        secret: MOCK_JWT_SECRET,
-      });
+      const jwtTokenPayload =
+        await this.jwtService.verifyAsync<JwtTokenPayload>(refreshToken, {
+          secret: MOCK_JWT_SECRET,
+        });
 
-      return void 0;
+      return jwtTokenPayload;
     } catch {
       throw new Error('Refresh token invalid');
     }
