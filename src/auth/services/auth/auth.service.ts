@@ -55,4 +55,16 @@ export class AuthService {
 
     return { accessToken, refreshToken };
   }
+
+  async verifyRefreshToken(refreshToken: string): Promise<void> {
+    try {
+      await this.jwtService.verifyAsync(refreshToken, {
+        secret: MOCK_JWT_SECRET,
+      });
+
+      return void 0;
+    } catch {
+      throw new Error('Refresh token invalid');
+    }
+  }
 }
