@@ -16,10 +16,14 @@ import {
   RefreshTokenResponse,
 } from './auth.controller.types';
 import { LogInUserDto } from './dto/log-in-user.dto';
+import { EnvService } from 'src/services/env';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private envService: EnvService,
+  ) {}
 
   @Post('sign-up')
   @HttpCode(200)
@@ -41,7 +45,7 @@ export class AuthController {
 
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: false, // TODO: add IS_PRODUCTION env variable
+      secure: this.envService.config.isProduction,
       sameSite: true,
     });
 
@@ -64,7 +68,7 @@ export class AuthController {
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: false, // TODO: add IS_PRODUCTION env variable
+        secure: this.envService.config.isProduction,
         sameSite: true,
       });
 
@@ -97,7 +101,7 @@ export class AuthController {
 
       response.cookie('refreshToken', newRefreshToken, {
         httpOnly: true,
-        secure: false, // TODO: add IS_PRODUCTION env variable
+        secure: this.envService.config.isProduction,
         sameSite: true,
       });
 
