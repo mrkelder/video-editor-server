@@ -13,6 +13,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from './services/auth/auth.service';
 import {
   CreateUserResponse,
+  LogInUserResponse,
   RefreshTokenResponse,
 } from './auth.controller.types';
 import { LogInUserDto } from './dto/log-in-user.dto';
