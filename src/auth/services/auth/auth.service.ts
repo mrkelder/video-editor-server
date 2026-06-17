@@ -4,90 +4,147 @@ import type {
   Temporary_User as User,
   Tepmorary_JwtTokenPayload as JwtTokenPayload,
 } from './auth.services.types';
-import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../../dto/create-user.dto';
+import {
+  AdminCreateUserCommand,
+  AdminGetUserCommand,
+  AdminSetUserPasswordCommand,
+  CognitoIdentityProviderClient,
+  CognitoIdentityProviderClientConfig,
+  UserNotFoundException,
+} from '@aws-sdk/client-cognito-identity-provider';
+import { EnvService } from 'src/services/env';
 
-const MOCK_USER_CREDENTIALS = { userName: 'admin', password: 'admin' };
-const MOCK_JWT_SECRET = '0001';
-const MOCK_USER: User = {
-  id: String(Math.floor(Math.random() * 100000)),
-  userName: MOCK_USER_CREDENTIALS.userName,
-};
+const cognitoIdentityProviderClientConfig: CognitoIdentityProviderClientConfig =
+  {};
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  private readonly congitoClient = new CognitoIdentityProviderClient(
+    cognitoIdentityProviderClientConfig,
+  );
+
+  constructor(private envService: EnvService) {}
 
   async verifyUserCredentials(
-    userName: string,
+    userEmail: string,
     password: string,
-  ): Promise<void> {
-    const doesUserExist = await this.doesUserExist(userName);
-    const areCredentialsValid =
-      userName === MOCK_USER_CREDENTIALS.userName &&
-      password === MOCK_USER_CREDENTIALS.password;
+  ): Promise<boolean> {
+    // TODO: replace with AWS Cognito implementation
+    const result = Promise.resolve(userEmail !== password);
 
-    if (!doesUserExist || !areCredentialsValid) {
-      throw new Error('Credentials are not valid');
-    }
-
-    return void 0;
+    return result;
   }
 
-  async doesUserExist(userName: string): Promise<boolean> {
+  async doesUserExist(userEmail: string): Promise<boolean> {
     try {
-      await this.getUserByUserName(userName);
+      await this.getUserByEmail(userEmail);
       return true;
-    } catch {
-      return false;
+    } catch (error) {
+      if (error instanceof UserNotFoundException) return false;
+      else throw error;
     }
   }
 
-  async getUserByUserName(userName: string): Promise<User> {
-    const user = await Promise.resolve(MOCK_USER);
-
-    if (userName === MOCK_USER_CREDENTIALS.userName) return user;
-    else throw new Error('User does not exist');
-  }
-
-  async getUserByUserId(userId: User['id']): Promise<User> {
-    const user = await Promise.resolve(MOCK_USER);
-
-    if (userId === MOCK_USER.id) return user;
-    else throw new Error('User does not exist');
-  }
-
-  async addUser({ userName, password }: CreateUserDto): Promise<User> {
-    const databaseUpdate = Promise.resolve({
-      userName,
-      password,
+  async getUserByEmail(userEmail: string): Promise<User> {
+    const getUser = new AdminGetUserCommand({
+      Username: userEmail,
+      UserPoolId: this.envService.config.awsCognitoUserPoolId,
     });
 
-    await databaseUpdate;
+    const cognitoUser = await this.congitoClient.send(getUser);
+    const cognitoUserId = cognitoUser.UserAttributes?.find(
+      ({ Name }) => Name === 'sub',
+    )?.Value;
+    const cognitoUserEmail = cognitoUser.UserAttributes?.find(
+      ({ Name }) => Name === 'email',
+    )?.Value;
 
-    return MOCK_USER;
+    if (!cognitoUserId || !cognitoUserEmail)
+      throw new Error('Unable to access user attributes');
+
+    const user: User = { id: cognitoUserId, email: cognitoUserEmail };
+
+    return user;
   }
 
-  async getTokenCombination(userId: User['id']): Promise<JwtTokenCombination> {
-    const jwtTokenPayload: JwtTokenPayload = { userId };
-    const accessToken = await this.jwtService.signAsync(
-      jwtTokenPayload,
-      { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
-    );
-    const refreshToken = await this.jwtService.signAsync(
-      jwtTokenPayload,
-      { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
-    );
+  async addUser({ email, password }: CreateUserDto): Promise<void> {
+    this.validatePassword(password);
 
-    return { accessToken, refreshToken };
+    try {
+      const createUser = new AdminCreateUserCommand({
+        Username: email,
+        UserPoolId: this.envService.config.awsCognitoUserPoolId,
+        UserAttributes: [{ Name: 'email', Value: email }],
+      });
+      const setUserPassword = new AdminSetUserPasswordCommand({
+        Username: email,
+        Password: password,
+        UserPoolId: this.envService.config.awsCognitoUserPoolId,
+        Permanent: true,
+      });
+
+      await this.congitoClient.send(createUser);
+      await this.congitoClient.send(setUserPassword);
+    } catch (error) {
+      console.log(error);
+      throw new Error('Could not create user');
+    }
+  }
+
+  private validatePassword(password: string) {
+    if (password.length < 8) {
+      throw new Error('Password must be at least 8 characters');
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      throw new Error('Password must contain an uppercase letter');
+    }
+
+    if (!/[a-z]/.test(password)) {
+      throw new Error('Password must contain a lowercase letter');
+    }
+
+    if (!/[0-9]/.test(password)) {
+      throw new Error('Password must contain a number');
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      throw new Error('Password must contain a symbol');
+    }
+
+    return true;
+  }
+
+  async getTokenCombination(): Promise<JwtTokenCombination> {
+    // TODO: remove JWT module, rely on AWS Cognito instead
+
+    // const jwtTokenPayload: JwtTokenPayload = { userId };
+    // const accessToken = await this.jwtService.signAsync(
+    //   jwtTokenPayload,
+    //   { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
+    // );
+    // const refreshToken = await this.jwtService.signAsync(
+    //   jwtTokenPayload,
+    //   { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
+    // );
+
+    const jwtTokenCombination = await Promise.resolve({
+      accessToken: '',
+      refreshToken: '',
+    });
+
+    return jwtTokenCombination;
   }
 
   async verifyRefreshToken(refreshToken: string): Promise<JwtTokenPayload> {
     try {
-      const jwtTokenPayload =
-        await this.jwtService.verifyAsync<JwtTokenPayload>(refreshToken, {
-          secret: MOCK_JWT_SECRET,
-        });
+      const jwtTokenPayload = await Promise.resolve({
+        userId: `Fake user id: ${refreshToken}`,
+      });
+      // await this.jwtService.verifyAsync<JwtTokenPayload>(refreshToken, {
+      //   secret: MOCK_JWT_SECRET,
+      // });
 
       return jwtTokenPayload;
     } catch {
