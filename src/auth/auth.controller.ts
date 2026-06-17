@@ -67,7 +67,7 @@ export class AuthController {
   async logInUser(
     @Body() logInUserDto: LogInUserDto,
     @Res({ passthrough: true }) response: Response,
-  ) {
+  ): Promise<LogInUserResponse> {
     try {
       const { userName, password } = logInUserDto;
       await this.authService.verifyUserCredentials(userName, password);
