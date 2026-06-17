@@ -31,25 +31,35 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
-    const { userName } = createUserDto;
-    const doesUserExist = await this.authService.doesUserExist(userName);
+    try {
+      const { userName } = createUserDto;
+      const doesUserExist = await this.authService.doesUserExist(userName);
 
-    if (doesUserExist) {
-      throw new HttpException('User already exists', HttpStatus.CONFLICT);
+      if (doesUserExist) {
+        throw new HttpException('User already exists', HttpStatus.CONFLICT);
+      }
+
+      const { id } = await this.authService.addUser(createUserDto);
+
+      const { accessToken, refreshToken } =
+        await this.authService.getTokenCombination(id);
+
+      response.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: this.envService.config.isProduction,
+        sameSite: true,
+      });
+
+      return { accessToken };
+    } catch (error) {
+      if (error instanceof Error)
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      else
+        throw new HttpException(
+          'Internal server error',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
     }
-
-    const { id } = await this.authService.addUser(createUserDto);
-
-    const { accessToken, refreshToken } =
-      await this.authService.getTokenCombination(id);
-
-    response.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: this.envService.config.isProduction,
-      sameSite: true,
-    });
-
-    return { accessToken };
   }
 
   @Post('log-in')
