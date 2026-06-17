@@ -10,7 +10,7 @@ export interface UserCredentialsVerification {
 // TODO: create global User class
 export interface Temporary_User {
   id: string;
-  userName: string;
+  email: string;
 }
 
 // TODO: move to JWT service
