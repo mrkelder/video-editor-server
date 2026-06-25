@@ -69,10 +69,9 @@ export class AuthController {
   ): Promise<LogInUserResponse> {
     try {
       const { userEmail, password } = logInUserDto;
-      const user = await this.authService.getUserByEmail(userEmail);
-
       const { accessToken, refreshToken } =
         await this.authService.getTokenCombination(userEmail, password);
+      const user = await this.authService.getUserByEmail(userEmail);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
