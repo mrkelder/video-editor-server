@@ -68,12 +68,12 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<LogInUserResponse> {
     try {
-      const { userName, password } = logInUserDto;
-      await this.authService.verifyUserCredentials(userName, password);
-      const user = await this.authService.getUserByUserName(userName);
+      const { userEmail, password } = logInUserDto;
+      await this.authService.verifyUserCredentials(userEmail, password);
+      const user = await this.authService.getUserByEmail(userEmail);
 
       const { accessToken, refreshToken } =
-        await this.authService.getTokenCombination(user.id);
+        await this.authService.getTokenCombination(userEmail, password);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
@@ -81,7 +81,7 @@ export class AuthController {
         sameSite: true,
       });
 
-      return { accessToken, userName: user.userName };
+      return { accessToken, userName: user.email };
     } catch {
       throw new HttpException(
         'Credentials are invalid',
