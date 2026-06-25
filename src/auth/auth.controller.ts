@@ -33,17 +33,17 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
     try {
-      const { userName } = createUserDto;
-      const doesUserExist = await this.authService.doesUserExist(userName);
+      const { email, password } = createUserDto;
+      const doesUserExist = await this.authService.doesUserExist(email);
 
       if (doesUserExist) {
         throw new HttpException('User already exists', HttpStatus.CONFLICT);
       }
 
-      const { id } = await this.authService.addUser(createUserDto);
+      await this.authService.addUser(createUserDto);
 
       const { accessToken, refreshToken } =
-        await this.authService.getTokenCombination(id);
+        await this.authService.getTokenCombination(email, password);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
