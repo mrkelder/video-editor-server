@@ -89,6 +89,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @HttpCode(200)
   async refreshToken(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
