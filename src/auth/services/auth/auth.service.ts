@@ -133,8 +133,13 @@ export class AuthService {
       },
     });
 
-    const { AuthenticationResult } =
+    const { AuthenticationResult, ChallengeName } =
       await this.congitoClient.send(getUserTokens);
+
+    if (ChallengeName)
+      throw new Error(
+        'User challenge is not supported but expected by Cognito',
+      );
 
     if (
       !AuthenticationResult ||
