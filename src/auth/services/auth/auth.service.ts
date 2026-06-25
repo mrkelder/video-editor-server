@@ -11,15 +11,18 @@ import {
   AdminSetUserPasswordCommand,
   CognitoIdentityProviderClient,
   CognitoIdentityProviderClientConfig,
+  InitiateAuthCommand,
   UserNotFoundException,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { EnvService } from 'src/services/env';
+import crypto from 'crypto';
 
 const cognitoIdentityProviderClientConfig: CognitoIdentityProviderClientConfig =
   {};
 
 @Injectable()
 export class AuthService {
+  // TODO: rename to cognitoClient
   private readonly congitoClient = new CognitoIdentityProviderClient(
     cognitoIdentityProviderClientConfig,
   );
@@ -116,25 +119,45 @@ export class AuthService {
     return true;
   }
 
-  async getTokenCombination(): Promise<JwtTokenCombination> {
-    // TODO: remove JWT module, rely on AWS Cognito instead
+  async getTokenCombination(
+    userEmail: string,
+    userPassword: string,
+  ): Promise<JwtTokenCombination> {
+    const getUserTokens = new InitiateAuthCommand({
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: this.envService.config.awsCognitoClientId,
+      AuthParameters: {
+        USERNAME: userEmail,
+        PASSWORD: userPassword,
+        SECRET_HASH: this.getAwsCognitoSecretHash(userEmail),
+      },
+    });
 
-    // const jwtTokenPayload: JwtTokenPayload = { userId };
-    // const accessToken = await this.jwtService.signAsync(
-    //   jwtTokenPayload,
-    //   { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
-    // );
-    // const refreshToken = await this.jwtService.signAsync(
-    //   jwtTokenPayload,
-    //   { secret: MOCK_JWT_SECRET }, // TODO: replace with env secret
-    // );
+    const { AuthenticationResult } =
+      await this.congitoClient.send(getUserTokens);
+
+    if (
+      !AuthenticationResult ||
+      !AuthenticationResult.AccessToken ||
+      !AuthenticationResult.RefreshToken
+    )
+      throw new Error('Failed to retrieve token combination');
 
     const jwtTokenCombination = await Promise.resolve({
-      accessToken: '',
-      refreshToken: '',
+      accessToken: AuthenticationResult.AccessToken,
+      refreshToken: AuthenticationResult.RefreshToken,
     });
 
     return jwtTokenCombination;
+  }
+
+  private getAwsCognitoSecretHash(userEmail: string): string {
+    const hasher = crypto.createHmac(
+      'sha256',
+      this.envService.config.awsCognitoClientSecret,
+    );
+    hasher.update(userEmail + this.envService.config.awsCognitoClientId);
+    return hasher.digest('base64');
   }
 
   async verifyRefreshToken(refreshToken: string): Promise<JwtTokenPayload> {
