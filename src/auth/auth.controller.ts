@@ -53,13 +53,11 @@ export class AuthController {
 
       return { accessToken };
     } catch (error) {
-      if (error instanceof Error)
-        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-      else
-        throw new HttpException(
-          'Internal server error',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+      console.error(error);
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
