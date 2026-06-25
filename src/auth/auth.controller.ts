@@ -69,7 +69,6 @@ export class AuthController {
   ): Promise<LogInUserResponse> {
     try {
       const { userEmail, password } = logInUserDto;
-      await this.authService.verifyUserCredentials(userEmail, password);
       const user = await this.authService.getUserByEmail(userEmail);
 
       const { accessToken, refreshToken } =

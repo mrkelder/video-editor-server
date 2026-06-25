@@ -29,16 +29,6 @@ export class AuthService {
 
   constructor(private envService: EnvService) {}
 
-  async verifyUserCredentials(
-    userEmail: string,
-    password: string,
-  ): Promise<boolean> {
-    // TODO: replace with AWS Cognito implementation
-    const result = Promise.resolve(userEmail !== password);
-
-    return result;
-  }
-
   async doesUserExist(userEmail: string): Promise<boolean> {
     try {
       await this.getUserByEmail(userEmail);
