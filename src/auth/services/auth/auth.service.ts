@@ -8,14 +8,13 @@ import { CreateUserDto } from '../../dto/create-user.dto';
 import {
   AdminCreateUserCommand,
   AdminGetUserCommand,
+  AdminInitiateAuthCommand,
   AdminSetUserPasswordCommand,
   CognitoIdentityProviderClient,
   CognitoIdentityProviderClientConfig,
-  InitiateAuthCommand,
   UserNotFoundException,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { EnvService } from 'src/services/env';
-import crypto from 'crypto';
 
 const cognitoIdentityProviderClientConfig: CognitoIdentityProviderClientConfig =
   {};
@@ -112,13 +111,13 @@ export class AuthService {
     userEmail: string,
     userPassword: string,
   ): Promise<JwtTokenCombination> {
-    const getUserTokens = new InitiateAuthCommand({
+    const getUserTokens = new AdminInitiateAuthCommand({
       AuthFlow: 'USER_PASSWORD_AUTH',
       ClientId: this.envService.config.awsCognitoClientId,
+      UserPoolId: this.envService.config.awsCognitoUserPoolId,
       AuthParameters: {
         USERNAME: userEmail,
         PASSWORD: userPassword,
-        SECRET_HASH: this.getAwsCognitoSecretHash(userEmail),
       },
     });
 
@@ -143,15 +142,6 @@ export class AuthService {
     });
 
     return jwtTokenCombination;
-  }
-
-  private getAwsCognitoSecretHash(userEmail: string): string {
-    const hasher = crypto.createHmac(
-      'sha256',
-      this.envService.config.awsCognitoClientSecret,
-    );
-    hasher.update(userEmail + this.envService.config.awsCognitoClientId);
-    return hasher.digest('base64');
   }
 
   async verifyRefreshToken(refreshToken: string): Promise<JwtTokenPayload> {
