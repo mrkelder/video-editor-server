@@ -112,7 +112,7 @@ export class AuthService {
     userPassword: string,
   ): Promise<JwtTokenCombination> {
     const getUserTokens = new AdminInitiateAuthCommand({
-      AuthFlow: 'USER_PASSWORD_AUTH',
+      AuthFlow: 'ADMIN_USER_PASSWORD_AUTH',
       ClientId: this.envService.config.awsCognitoClientId,
       UserPoolId: this.envService.config.awsCognitoUserPoolId,
       AuthParameters: {
