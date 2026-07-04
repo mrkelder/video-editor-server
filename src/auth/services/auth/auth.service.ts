@@ -22,7 +22,6 @@ const cognitoIdentityProviderClientConfig: CognitoIdentityProviderClientConfig =
 
 @Injectable()
 export class AuthService {
-  // TODO: rename to cognitoClient
   private readonly congitoClient = new CognitoIdentityProviderClient(
     cognitoIdentityProviderClientConfig,
   );
