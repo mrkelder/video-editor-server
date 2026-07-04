@@ -3,5 +3,4 @@ export interface EnvConfig {
   isMockServer: boolean;
   awsCognitoUserPoolId: string;
   awsCognitoClientId: string;
-  awsCognitoClientSecret: string;
 }
