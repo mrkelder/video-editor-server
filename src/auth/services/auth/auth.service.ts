@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type {
   JwtTokenCombination,
+  RefreshedJwtTokenCombination,
   Temporary_User as User,
-  Tepmorary_JwtTokenPayload as JwtTokenPayload,
 } from './auth.services.types';
 import { CreateUserDto } from '../../dto/create-user.dto';
 import {
@@ -142,18 +142,29 @@ export class AuthService {
     };
   }
 
-  async verifyRefreshToken(refreshToken: string): Promise<JwtTokenPayload> {
-    try {
-      const jwtTokenPayload = await Promise.resolve({
-        userId: `Fake user id: ${refreshToken}`,
-      });
-      // await this.jwtService.verifyAsync<JwtTokenPayload>(refreshToken, {
-      //   secret: MOCK_JWT_SECRET,
-      // });
+  async getRefreshedTokenCombination(
+    refreshToken: string,
+  ): Promise<RefreshedJwtTokenCombination> {
+    const refreshTokenCommand = new AdminInitiateAuthCommand({
+      AuthFlow: 'REFRESH_TOKEN_AUTH',
+      ClientId: this.envService.config.awsCognitoClientId,
+      UserPoolId: this.envService.config.awsCognitoUserPoolId,
+      AuthParameters: {
+        REFRESH_TOKEN: refreshToken,
+      },
+    });
 
-      return jwtTokenPayload;
-    } catch {
-      throw new Error('Refresh token invalid');
-    }
+    const { AuthenticationResult, ChallengeName } =
+      await this.congitoClient.send(refreshTokenCommand);
+
+    if (ChallengeName)
+      throw new Error(
+        'User challenge is not supported but expected by Cognito',
+      );
+
+    if (!AuthenticationResult || !AuthenticationResult.AccessToken)
+      throw new Error('Failed to retrieve token combination');
+
+    return { accessToken: AuthenticationResult.AccessToken };
   }
 }
