@@ -99,15 +99,10 @@ export class AuthController {
 
       if (!refreshToken) throw new Error('Refresh token is missing');
 
-      const { userId } =
-        await this.authService.verifyRefreshToken(refreshToken);
+      const { accessToken: newAccessToken } =
+        await this.authService.getRefreshedTokenCombination(refreshToken);
 
-      const user = await this.authService.getUserByUserId(userId);
-
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-        await this.authService.getTokenCombination(user.id);
-
-      response.cookie('refreshToken', newRefreshToken, {
+      response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: this.envService.config.isProduction,
         sameSite: true,
