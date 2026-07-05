@@ -13,6 +13,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from './services/auth/auth.service';
 import {
   CreateUserResponse,
+  LogInUserResponse,
   RefreshTokenResponse,
 } from './auth.controller.types';
 import { LogInUserDto } from './dto/log-in-user.dto';
@@ -31,40 +32,18 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<CreateUserResponse> {
-    const { userName } = createUserDto;
-    const doesUserExist = await this.authService.doesUserExist(userName);
-
-    if (doesUserExist) {
-      throw new HttpException('User already exists', HttpStatus.CONFLICT);
-    }
-
-    const { id } = await this.authService.addUser(createUserDto);
-
-    const { accessToken, refreshToken } =
-      await this.authService.getTokenCombination(id);
-
-    response.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: this.envService.config.isProduction,
-      sameSite: true,
-    });
-
-    return { accessToken };
-  }
-
-  @Post('log-in')
-  @HttpCode(200)
-  async logInUser(
-    @Body() logInUserDto: LogInUserDto,
-    @Res({ passthrough: true }) response: Response,
-  ) {
     try {
-      const { userName, password } = logInUserDto;
-      await this.authService.verifyUserCredentials(userName, password);
-      const user = await this.authService.getUserByUserName(userName);
+      const { email, password } = createUserDto;
+      const doesUserExist = await this.authService.doesUserExist(email);
+
+      if (doesUserExist) {
+        throw new HttpException('User already exists', HttpStatus.CONFLICT);
+      }
+
+      await this.authService.addUser(createUserDto);
 
       const { accessToken, refreshToken } =
-        await this.authService.getTokenCombination(user.id);
+        await this.authService.getTokenCombination(email, password);
 
       response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
@@ -72,7 +51,35 @@ export class AuthController {
         sameSite: true,
       });
 
-      return { accessToken, userName: user.userName };
+      return { accessToken };
+    } catch (error) {
+      console.error(error);
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('log-in')
+  @HttpCode(200)
+  async logInUser(
+    @Body() logInUserDto: LogInUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<LogInUserResponse> {
+    try {
+      const { userEmail, password } = logInUserDto;
+      const { accessToken, refreshToken } =
+        await this.authService.getTokenCombination(userEmail, password);
+      const user = await this.authService.getUserByEmail(userEmail);
+
+      response.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: this.envService.config.isProduction,
+        sameSite: true,
+      });
+
+      return { accessToken, userName: user.email };
     } catch {
       throw new HttpException(
         'Credentials are invalid',
@@ -82,6 +89,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @HttpCode(200)
   async refreshToken(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -91,15 +99,10 @@ export class AuthController {
 
       if (!refreshToken) throw new Error('Refresh token is missing');
 
-      const { userId } =
-        await this.authService.verifyRefreshToken(refreshToken);
+      const { accessToken: newAccessToken } =
+        await this.authService.getRefreshedTokenCombination(refreshToken);
 
-      const user = await this.authService.getUserByUserId(userId);
-
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-        await this.authService.getTokenCombination(user.id);
-
-      response.cookie('refreshToken', newRefreshToken, {
+      response.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: this.envService.config.isProduction,
         sameSite: true,

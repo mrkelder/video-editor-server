@@ -3,6 +3,10 @@ export interface JwtTokenCombination {
   refreshToken: string;
 }
 
+export interface RefreshedJwtTokenCombination {
+  accessToken: string;
+}
+
 export interface UserCredentialsVerification {
   result: 'ok' | 'error';
 }
@@ -10,10 +14,5 @@ export interface UserCredentialsVerification {
 // TODO: create global User class
 export interface Temporary_User {
   id: string;
-  userName: string;
-}
-
-// TODO: move to JWT service
-export interface Tepmorary_JwtTokenPayload {
-  userId: Temporary_User['id'];
+  email: string;
 }
