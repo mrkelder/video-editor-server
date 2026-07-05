@@ -136,12 +136,10 @@ export class AuthService {
     )
       throw new Error('Failed to retrieve token combination');
 
-    const jwtTokenCombination = await Promise.resolve({
+    return {
       accessToken: AuthenticationResult.AccessToken,
       refreshToken: AuthenticationResult.RefreshToken,
-    });
-
-    return jwtTokenCombination;
+    };
   }
 
   async verifyRefreshToken(refreshToken: string): Promise<JwtTokenPayload> {
